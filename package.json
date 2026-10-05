@@ -1,0 +1,27 @@
+{
+  "name": "smart-queue-management-system",
+  "version": "1.0.0",
+  "description": "Smart Queue Management System with Real-Time Tracking, Token Booking & Predictive Wait Times",
+  "main": "src/app.js",
+ "scripts": {
+  "start": "node src/app.js",
+  "dev": "node --watch src/app.js",
+  "open": "start http://localhost:3000"
+},
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.12.0",
+    "socket.io": "^4.8.1"
+  },
+  "keywords": [
+    "queue-management",
+    "socket.io",
+    "full-stack",
+    "express",
+    "mysql"
+  ],
+  "author": "College Project Collaboration",
+  "license": "ISC"
+}

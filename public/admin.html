@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartQueue | Counter Panel</title>
+
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Small UI improvement -->
+  <style>
+    .live-badge {
+      background: #00d4ff;
+      color: #000;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: 8px;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="brand">
+      <span>⚙ SmartQueue</span>
+      <span class="brand-badge">STAFF</span>
+    </div>
+
+    <div class="nav-links">
+      <a href="index.html">Book & Track</a>
+      <a href="admin.html" class="active">Counter Panel</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header style="text-align:center; margin:20px 0;">
+    <h2>💻 Counter Control Panel</h2>
+    <p style="color:gray;">Real-time token management system</p>
+    <div class="live-badge">🟢 LIVE SYSTEM</div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="container">
+
+    <!-- COUNTER SELECT -->
+    <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h3>Select Counter</h3>
+        <p style="color:gray;">Choose your working counter</p>
+      </div>
+
+      <select id="counterSelect">
+        <option value="1" data-dept="1">Counter 1 (General)</option>
+        <option value="2" data-dept="2">Counter 2 (Billing)</option>
+        <option value="3" data-dept="3">Counter 3 (Pharmacy)</option>
+        <option value="4" data-dept="4">Counter 4 (Admin)</option>
+      </select>
+    </div>
+
+    <div class="grid-2">
+
+      <!-- LEFT: CURRENT TOKEN -->
+      <section class="glass-card">
+
+        <h3>📢 Currently Serving</h3>
+
+        <!-- EMPTY STATE -->
+        <div id="noServingState" style="text-align:center; padding:25px;">
+          <p style="font-size:40px;">🛎️</p>
+          <p>No active token</p>
+
+          <button id="callNextBtn" class="btn btn-primary">
+            🔔 Call Next Token
+          </button>
+        </div>
+
+        <!-- ACTIVE STATE -->
+        <div id="activeServingState" style="display:none;">
+
+          <div class="ticket-box">
+            <h3 id="servingDeptName">Department</h3>
+            <div class="ticket-number" id="servingTokenNum">---</div>
+            <p id="servingCustomerName">---</p>
+          </div>
+
+          <div style="display:grid; gap:10px; margin-top:15px;">
+
+            <button id="recallBtn" class="btn btn-amber">🔁 Recall</button>
+            <button id="completeBtn" class="btn btn-emerald">✅ Complete</button>
+            <button id="noShowBtn" class="btn btn-rose">❌ No Show</button>
+            <button id="nextAfterBtn" class="btn btn-primary">➡ Next</button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- RIGHT: QUEUE -->
+      <section class="glass-card">
+
+        <h3>⌛ Waiting Queue</h3>
+        <p style="color:gray;">Live department queue</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Wait</th>
+            </tr>
+          </thead>
+
+          <tbody id="waitingTableBody">
+            <tr>
+              <td colspan="4" style="text-align:center; color:gray;">
+                No tokens in queue
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- SCRIPTS -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+</html>
