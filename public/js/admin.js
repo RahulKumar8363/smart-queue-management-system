@@ -54,7 +54,7 @@ async function callNext() {
       return;
     }
 
-    const res = await fetch("http://localhost:3000/api/tokens/call-next", {
+    const res = await fetch("/api/tokens/call-next", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -84,7 +84,7 @@ async function updateStatus(status) {
 
   try {
     const res = await fetch(
-      `http://localhost:3000/api/tokens/status/${currentServingToken.id}`,
+      `/api/tokens/status/${currentServingToken.id}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -155,7 +155,7 @@ function renderServing(token) {
 // ================= LOAD QUEUE =================
 async function loadQueue() {
   try {
-    const res = await fetch("http://localhost:3000/api/tokens/overview");
+    const res = await fetch("/api/tokens/overview");
     const data = await res.json();
 
     const tbody = document.getElementById("waitingTableBody");
@@ -164,7 +164,7 @@ async function loadQueue() {
     const list = Array.isArray(data.data) ? data.data : [];
 
     if (!currentDeptId) {
-      tbody.innerHTML = `<tr><td colspan="5">Select counter first</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:32px 20px; color:var(--text-muted);">Select a counter to load the queue</td></tr>`;
       return;
     }
 
@@ -175,19 +175,24 @@ async function loadQueue() {
     tbody.innerHTML = "";
 
     if (deptTokens.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5">No tokens waiting</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:32px 20px; color:var(--text-muted);">No patients waiting in this department</td></tr>`;
       return;
     }
 
     deptTokens.forEach((t, index) => {
       const row = document.createElement("tr");
+      const statusClass = 'status-' + (t.status || 'WAITING');
+      const statusLabel = (t.status || 'WAITING').replace('_', ' ');
+      const isServing = t.status === 'SERVING' || t.status === 'CALLED' || t.status === 'IN_PROGRESS';
+
+      if (isServing) row.classList.add('row-serving');
 
       row.innerHTML = `
-        <td>${t.token_number}</td>
-        <td>${t.user_name}</td>
-        <td>${t.status}</td>
-        <td>${index + 1}</td>
-        <td>${t.estimated_wait_mins || 0} min</td>
+        <td style="font-size:12px; color:var(--text-muted); font-weight:600;">${index + 1}</td>
+        <td class="td-token">${t.token_number}</td>
+        <td class="td-name">${t.user_name}</td>
+        <td><span class="status-tag ${statusClass}">${statusLabel}</span></td>
+        <td style="color:var(--text-muted);">${t.estimated_wait_mins ? t.estimated_wait_mins + ' min' : '—'}</td>
       `;
 
       tbody.appendChild(row);

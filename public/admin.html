@@ -2,146 +2,363 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartQueue | Counter Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedQueue | Counter Staff Panel</title>
+  <meta name="description" content="Counter staff panel for managing patient queue tokens in real-time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="css/styles.css" />
 
-  <link rel="stylesheet" href="css/styles.css">
-
-  <!-- Small UI improvement -->
   <style>
-    .live-badge {
-      background: #00d4ff;
-      color: #000;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      display: inline-block;
-      margin-top: 8px;
+    /* Staff panel uses a clean top-bar + full-page layout (no sidebar scroll) */
+    body { background: var(--bg); }
+
+    .staff-layout {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    select {
-      padding: 10px;
-      border-radius: 8px;
+    .staff-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 24px;
+      padding: 28px 32px;
     }
+
+    @media (max-width: 900px) {
+      .staff-body { grid-template-columns: 1fr; padding: 20px 16px; }
+    }
+
+    /* No-show / empty serving */
+    .no-serving-empty {
+      text-align: center;
+      padding: 36px 20px;
+    }
+
+    .no-serving-empty .icon-ring {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(14,165,233,.12), rgba(6,182,212,.08));
+      border: 1.5px solid rgba(14,165,233,.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      color: var(--teal-600);
+    }
+
+    .no-serving-empty h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .no-serving-empty p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Queue table row highlight for serving */
+    .row-serving {
+      background: rgba(99,102,241,.05) !important;
+    }
+
+    .row-serving td { font-weight: 600; }
+
+    /* Counter pill */
+    .counter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 13px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: var(--shadow-xl);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.35s ease;
+      max-width: 320px;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .toast.success { background: var(--green-500); }
+    .toast.warning { background: var(--amber-500); }
+    .toast.error   { background: var(--red-500); }
+    .toast.info    { background: var(--blue-500); }
   </style>
 </head>
 
 <body>
 
-  <!-- NAVBAR -->
+<div class="staff-layout">
+
+  <!-- ======================== TOP NAVIGATION ======================== -->
   <nav class="navbar">
-    <div class="brand">
-      <span>⚙ SmartQueue</span>
+    <a class="brand" href="index.html">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      MedQueue
       <span class="brand-badge">STAFF</span>
-    </div>
+    </a>
 
     <div class="nav-links">
-      <a href="index.html">Book & Track</a>
-      <a href="admin.html" class="active">Counter Panel</a>
-      <a href="dashboard.html">Dashboard</a>
+      <a href="index.html" id="nav-book">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Book &amp; Track
+      </a>
+      <a href="admin.html" class="active" id="nav-counter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Counter Panel
+      </a>
+      <a href="dashboard.html" id="nav-dash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Live Dashboard
+      </a>
     </div>
   </nav>
 
-  <!-- HEADER -->
-  <header style="text-align:center; margin:20px 0;">
-    <h2>💻 Counter Control Panel</h2>
-    <p style="color:gray;">Real-time token management system</p>
-    <div class="live-badge">🟢 LIVE SYSTEM</div>
-  </header>
-
-  <!-- MAIN -->
-  <main class="container">
-
-    <!-- COUNTER SELECT -->
-    <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <h3>Select Counter</h3>
-        <p style="color:gray;">Choose your working counter</p>
-      </div>
-
-      <select id="counterSelect">
-        <option value="1" data-dept="1">Counter 1 (General)</option>
-        <option value="2" data-dept="2">Counter 2 (Billing)</option>
-        <option value="3" data-dept="3">Counter 3 (Pharmacy)</option>
-        <option value="4" data-dept="4">Counter 4 (Admin)</option>
-      </select>
+  <!-- ======================== COUNTER HEADER BANNER ======================== -->
+  <div class="counter-header">
+    <div>
+      <h1>Counter Staff Panel</h1>
+      <p>Real-time token management &mdash; select your counter to begin</p>
     </div>
 
-    <div class="grid-2">
+    <div class="counter-select-wrap">
+      <div class="live-pill">
+        <span class="live-dot"></span>
+        LIVE SYSTEM
+      </div>
+      <select id="counterSelect" aria-label="Select Counter">
+        <option value="1" data-dept="1">Counter 1 — General Consultation</option>
+        <option value="2" data-dept="2">Counter 2 — Billing &amp; Cashier</option>
+        <option value="3" data-dept="3">Counter 3 — Pharmacy &amp; Medicine</option>
+        <option value="4" data-dept="4">Counter 4 — Admin &amp; Registration</option>
+      </select>
+    </div>
+  </div>
 
-      <!-- LEFT: CURRENT TOKEN -->
-      <section class="glass-card">
+  <!-- ======================== STAFF BODY ======================== -->
+  <div class="staff-body">
 
-        <h3>📢 Currently Serving</h3>
+    <!-- ===== LEFT COLUMN: CURRENT TOKEN + ACTIONS ===== -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <!-- Currently Serving Card -->
+      <div class="glass-card" style="padding:0; overflow:hidden;">
+
+        <div style="padding:18px 22px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+          <div class="card-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Currently Serving
+          </div>
+          <span id="servingStatus" class="live-pill" style="display:none;">
+            <span class="live-dot"></span>
+            ACTIVE
+          </span>
+        </div>
 
         <!-- EMPTY STATE -->
-        <div id="noServingState" style="text-align:center; padding:25px;">
-          <p style="font-size:40px;">🛎️</p>
-          <p>No active token</p>
-
-          <button id="callNextBtn" class="btn btn-primary">
-            🔔 Call Next Token
+        <div id="noServingState" class="no-serving-empty">
+          <div class="icon-ring">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          </div>
+          <h3>Queue is Ready</h3>
+          <p>No token is currently being served. Call the next patient when ready.</p>
+          <button id="callNextBtn" class="btn btn-call" style="width:100%;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.62 4.46 2 2 0 0 1 3.6 2.26h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.81-1.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Call Next Token
           </button>
         </div>
 
-        <!-- ACTIVE STATE -->
-        <div id="activeServingState" style="display:none;">
+        <!-- ACTIVE SERVING STATE -->
+        <div id="activeServingState" style="display:none; padding:0;">
 
-          <div class="ticket-box">
-            <h3 id="servingDeptName">Department</h3>
-            <div class="ticket-number" id="servingTokenNum">---</div>
-            <p id="servingCustomerName">---</p>
+          <!-- Big Token Display -->
+          <div class="serving-token-card" style="border-radius:0; border:none; border-bottom:1px solid rgba(255,255,255,.08);">
+            <div class="serving-label">Now Serving</div>
+            <div class="serving-number" id="servingTokenNum">---</div>
+            <div class="serving-dept" id="servingDeptName">Department</div>
+            <div class="serving-name" id="servingCustomerName">Patient Name</div>
           </div>
 
-          <div style="display:grid; gap:10px; margin-top:15px;">
+          <!-- Actions -->
+          <div style="padding:20px 22px;">
+            <button id="nextAfterBtn" class="btn btn-call" style="margin-bottom:12px; font-size:15px;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+              Call Next Token
+            </button>
 
-            <button id="recallBtn" class="btn btn-amber">🔁 Recall</button>
-            <button id="completeBtn" class="btn btn-emerald">✅ Complete</button>
-            <button id="noShowBtn" class="btn btn-rose">❌ No Show</button>
-            <button id="nextAfterBtn" class="btn btn-primary">➡ Next</button>
-
+            <div class="action-grid">
+              <button id="recallBtn" class="btn btn-amber">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                Recall
+              </button>
+              <button id="completeBtn" class="btn btn-emerald">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Complete
+              </button>
+              <button id="noShowBtn" class="btn btn-rose" style="grid-column:1/-1;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Mark as No Show
+              </button>
+            </div>
           </div>
 
         </div>
+      </div>
 
-      </section>
+    </div>
 
-      <!-- RIGHT: QUEUE -->
-      <section class="glass-card">
+    <!-- ===== RIGHT COLUMN: WAITING QUEUE TABLE ===== -->
+    <div class="glass-card" style="padding:0; overflow:hidden; align-self:start;">
 
-        <h3>⌛ Waiting Queue</h3>
-        <p style="color:gray;">Live department queue</p>
+      <div style="padding:18px 22px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div class="card-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Waiting Queue
+          </div>
+          <div class="card-subtitle" id="queueSubtitle">Patients waiting in this department</div>
+        </div>
+        <div id="queueCount" style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; background:var(--amber-100); color:var(--amber-500); font-size:12px; font-weight:700;">
+          <span id="waitingCountBadge">0</span> Waiting
+        </div>
+      </div>
 
+      <div class="data-table-wrap" style="border:none; border-radius:0;">
         <table>
           <thead>
             <tr>
+              <th>#</th>
               <th>Token</th>
-              <th>Name</th>
+              <th>Patient</th>
               <th>Status</th>
-              <th>Wait</th>
+              <th>Est. Wait</th>
             </tr>
           </thead>
-
           <tbody id="waitingTableBody">
             <tr>
-              <td colspan="4" style="text-align:center; color:gray;">
-                No tokens in queue
+              <td colspan="5" style="text-align:center; padding:40px 20px;">
+                <span style="color:var(--text-muted); font-size:14px;">Select a counter to load the queue</span>
               </td>
             </tr>
           </tbody>
         </table>
-
-      </section>
+      </div>
 
     </div>
 
-  </main>
+  </div><!-- /staff-body -->
 
-  <!-- SCRIPTS -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="js/admin.js"></script>
+</div><!-- /staff-layout -->
+
+<!-- ======================== SCRIPTS ======================== -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/admin.js"></script>
+
+<!-- Enhanced UI script -->
+<script>
+  // Toast notification helper
+  function showToast(message, type = 'info') {
+    const existing = document.getElementById('__toast');
+    if (existing) existing.remove();
+
+    const icons = {
+      success: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      warning: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      error:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+      info:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+    };
+
+    const toast = document.createElement('div');
+    toast.id = '__toast';
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `${icons[type] || icons.info} ${message}`;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.3s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 3200);
+  }
+
+  // Expose globally so admin.js can use it (patch alert calls)
+  window.showToast = showToast;
+
+  // Patch original alert to use toast
+  window._origAlert = window.alert;
+  window.alert = (msg) => {
+    if (typeof msg === 'string' && msg.includes('Recalled')) {
+      showToast(msg.replace('🔔 ', ''), 'warning');
+    } else if (typeof msg === 'string' && (msg.includes('Select') || msg.includes('Fill'))) {
+      showToast(msg, 'error');
+    } else {
+      showToast(msg, 'info');
+    }
+  };
+
+  // Update waiting count badge
+  const _origLoadQueue = window.loadQueue;
+
+  // Hook: after DOM ready, observe table changes to update count
+  document.addEventListener('DOMContentLoaded', () => {
+    const tbody = document.getElementById('waitingTableBody');
+    const badge = document.getElementById('waitingCountBadge');
+
+    if (tbody && badge) {
+      const observer = new MutationObserver(() => {
+        const rows = tbody.querySelectorAll('tr');
+        let count = 0;
+        rows.forEach(r => {
+          const tds = r.querySelectorAll('td');
+          if (tds.length > 1) count++;
+        });
+        badge.textContent = count;
+      });
+
+      observer.observe(tbody, { childList: true, subtree: true });
+    }
+
+    // Show/hide servingStatus pill
+    const origRenderServing = window.renderServing;
+    window.renderServing = function(token) {
+      if (origRenderServing) origRenderServing(token);
+      const pill = document.getElementById('servingStatus');
+      if (pill) pill.style.display = token ? 'inline-flex' : 'none';
+    };
+  });
+</script>
 
 </body>
 </html>

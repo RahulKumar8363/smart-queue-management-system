@@ -9,6 +9,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const form = document.getElementById("bookingForm");
   const trackBtn = document.getElementById("trackBtn");
+  const myTokenBtn = document.getElementById("myTokenBtn");
+
+if (myTokenBtn) {
+  myTokenBtn.addEventListener("click", () => {
+    const myToken = localStorage.getItem("smart_token");
+
+    if (!myToken) {
+      alert("No personal token found. Please book a token first.");
+      return;
+    }
+
+    document.getElementById("trackInput").value = myToken;
+    fetchToken(myToken);
+  });
+}
 
   if (form) form.addEventListener("submit", bookToken);
   if (trackBtn) trackBtn.addEventListener("click", trackToken);
@@ -44,9 +59,10 @@ async function bookToken(e) {
 
   const userName = document.getElementById("userName").value;
   const userPhone = document.getElementById("userPhone").value;
+  const userEmail = document.getElementById("userEmail").value.trim();
   const departmentId = document.getElementById("departmentSelect").value;
 
-  if (!userName || !userPhone || !departmentId) {
+ if (!userName || !userPhone || !userEmail || !departmentId) {
     alert("Fill all fields");
     return;
   }
@@ -55,7 +71,7 @@ async function bookToken(e) {
     const res = await fetch("/api/tokens/book", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userName, userPhone, departmentId })
+      body: JSON.stringify({ userName, userPhone, userEmail, departmentId })
     });
 
     const data = await res.json();
@@ -90,10 +106,16 @@ function trackToken() {
 // ================= FETCH TOKEN =================
 async function fetchToken(tokenNo) {
   try {
-    const res = await fetch(`/api/tokens/status/${tokenNo}`);
+    const res = await fetch(
+      `/api/tokens/status/${encodeURIComponent(tokenNo.trim())}`
+    );
+
     const data = await res.json();
 
-    if (!data.success) return;
+    if (!data.success) {
+      alert(data.message || "Token not found. Please check your token number.");
+      return;
+    }
 
     currentToken = data.data;
 
@@ -103,6 +125,7 @@ async function fetchToken(tokenNo) {
 
   } catch (err) {
     console.error("Track error:", err);
+    alert("Unable to track token. Please try again.");
   }
 }
 

@@ -2,101 +2,578 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>SmartQueue | Live Dashboard</title>
-
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedQueue | Live Analytics Dashboard</title>
+  <meta name="description" content="Real-time queue analytics dashboard for all hospital departments." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="css/styles.css" />
 
   <style>
-    .live-dot {
-      color: #00ff88;
+    body { background: var(--bg); }
+
+    /* SIDEBAR LAYOUT */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid rgba(255,255,255,.06);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      z-index: 200;
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+    }
+
+    .sidebar-logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--teal-600), var(--accent));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo-textblock { line-height: 1.2; }
+    .sidebar-logo-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 17px;
+      color: #fff;
+    }
+    .sidebar-logo-badge {
+      font-size: 9px;
       font-weight: 700;
+      letter-spacing: 1.2px;
+      color: var(--teal-400);
+      text-transform: uppercase;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 14px 10px;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,.28);
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      padding: 12px 10px 5px;
+    }
+
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: rgba(255,255,255,.5);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 2px;
+    }
+
+    .sidebar-nav a svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-nav a:hover {
+      background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.9);
+    }
+
+    .sidebar-nav a.active {
+      background: linear-gradient(90deg, rgba(14,165,233,.25), rgba(6,182,212,.12));
+      color: #7dd3fc;
+      font-weight: 600;
+    }
+
+    .sidebar-nav a.active svg { color: #38bdf8; }
+
+    .sidebar-footer {
+      padding: 14px 18px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      font-size: 11px;
+      color: rgba(255,255,255,.25);
+      line-height: 1.5;
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      margin-left: 240px;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    /* Dashboard header */
+    .dash-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .dash-header-left h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .dash-header-left p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .dash-header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Dashboard body */
+    .dash-body {
+      padding: 28px 32px;
+    }
+
+    /* Section heading */
+    .section-heading {
       font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .dashboard-header {
-      text-align: center;
-      margin: 20px 0;
+    .section-heading svg { color: var(--teal-600); width: 16px; height: 16px; }
+
+    /* Mobile toggle */
+    .sidebar-toggle {
+      display: none;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      cursor: pointer;
     }
 
-    .dashboard-header h2 {
-      margin-bottom: 5px;
+    /* Live activity table */
+    .live-table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .live-table-card .card-header {
+      margin: 0;
+      padding: 18px 22px;
+      border-radius: 0;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-240px); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .sidebar-toggle { display: inline-flex; align-items: center; }
+      .dash-body { padding: 20px 16px; }
+      .dash-header { padding: 16px; }
     }
   </style>
 </head>
 
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
+<div class="app-shell">
 
-    <div class="brand">
-      <span>📊 SmartQueue</span>
-      <span class="brand-badge">LIVE</span>
+  <!-- ======================== SIDEBAR ======================== -->
+  <aside class="sidebar" id="appSidebar">
+
+    <a class="sidebar-logo" href="index.html">
+      <div class="sidebar-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="sidebar-logo-textblock">
+        <div class="sidebar-logo-name">MedQueue</div>
+        <div class="sidebar-logo-badge">Healthcare Platform</div>
+      </div>
+    </a>
+
+    <nav class="sidebar-nav">
+
+      <div class="sidebar-section-label">Navigation</div>
+
+      <a href="index.html" id="snav-book">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Book &amp; Track
+      </a>
+
+      <a href="admin.html" id="snav-counter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Counter Panel
+      </a>
+
+      <a href="dashboard.html" class="active" id="snav-dash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Live Dashboard
+      </a>
+
+      <div class="sidebar-section-label" style="margin-top:8px;">Analytics</div>
+
+      <a href="dashboard.html" id="snav-overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Queue Overview
+      </a>
+
+      <a href="dashboard.html" id="snav-depts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Departments
+      </a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-weight:600; color:rgba(255,255,255,.45); margin-bottom:3px;">MedQueue v1.0</div>
+      Smart Queue Management System
+    </div>
+  </aside>
+
+  <!-- ======================== MAIN CONTENT ======================== -->
+  <main class="main-content">
+
+    <!-- Dashboard Header -->
+    <div class="dash-header">
+      <div class="dash-header-left">
+        <h1>Live Analytics Dashboard</h1>
+        <p id="dashSubtitle">Real-time queue monitoring across all departments</p>
+      </div>
+
+      <div class="dash-header-right">
+        <button class="sidebar-toggle" onclick="document.getElementById('appSidebar').classList.toggle('open')" aria-label="Toggle sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="live-pill">
+          <span class="live-dot"></span>
+          LIVE SYSTEM
+        </div>
+        <div id="dashTime" style="font-size:13px; font-weight:600; color:var(--text-muted);"></div>
+      </div>
     </div>
 
-    <div class="nav-links">
-      <a href="index.html">Book & Track</a>
-      <a href="admin.html">Counter Panel</a>
-      <a href="dashboard.html" class="active">Dashboard</a>
-    </div>
+    <!-- Dashboard Body -->
+    <div class="dash-body">
 
-  </nav>
+      <!-- KPI Cards -->
+      <div class="grid-4 mb-24">
 
-  <!-- HEADER -->
-  <header class="dashboard-header">
-    <h2>📊 Real-Time Analytics Dashboard</h2>
-    <p style="color:gray;">Live system monitoring</p>
-    <div class="live-dot">● LIVE SYSTEM RUNNING</div>
-  </header>
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="metricTotal">0</div>
+            <div class="kpi-label">Total Tokens</div>
+          </div>
+        </div>
 
-  <!-- MAIN -->
-  <main class="container">
+        <div class="kpi-card kpi-amber">
+          <div class="kpi-icon amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="metricWaiting" style="color:var(--amber-500);">0</div>
+            <div class="kpi-label">Waiting</div>
+          </div>
+        </div>
 
-    <!-- METRICS -->
-    <section class="grid-4">
+        <div class="kpi-card kpi-teal">
+          <div class="kpi-icon teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="metricServed" style="color:var(--accent);">0</div>
+            <div class="kpi-label">Currently Serving</div>
+          </div>
+        </div>
 
-      <div class="metric-box">
-        <div class="metric-value" id="metricTotal">0</div>
-        <div class="metric-label">Total Tokens</div>
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="metricCompleted" style="color:var(--green-500);">0</div>
+            <div class="kpi-label">Completed</div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="metric-box">
-        <div class="metric-value" id="metricServed" style="color:#10b981;">0</div>
-        <div class="metric-label">Served</div>
+      <!-- Department Live Status -->
+      <div class="section-heading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Department Status
       </div>
 
-      <div class="metric-box">
-        <div class="metric-value" id="metricWaiting" style="color:#f59e0b;">0</div>
-        <div class="metric-label">Waiting</div>
+      <div class="grid-4 mb-24" id="departmentGrid">
+        <!-- JS populates -->
+        <div class="dept-stat-card" style="animation:fadeUp 0.4s ease;">
+          <div style="height:16px; border-radius:4px; background:var(--border); margin-bottom:8px;" class="skeleton"></div>
+          <div style="height:10px; width:60%; border-radius:4px; background:var(--border);" class="skeleton"></div>
+        </div>
+        <div class="dept-stat-card" style="animation:fadeUp 0.4s ease 0.05s both;">
+          <div style="height:16px; border-radius:4px; background:var(--border); margin-bottom:8px;" class="skeleton"></div>
+          <div style="height:10px; width:60%; border-radius:4px; background:var(--border);" class="skeleton"></div>
+        </div>
+        <div class="dept-stat-card" style="animation:fadeUp 0.4s ease 0.10s both;">
+          <div style="height:16px; border-radius:4px; background:var(--border); margin-bottom:8px;" class="skeleton"></div>
+          <div style="height:10px; width:60%; border-radius:4px; background:var(--border);" class="skeleton"></div>
+        </div>
+        <div class="dept-stat-card" style="animation:fadeUp 0.4s ease 0.15s both;">
+          <div style="height:16px; border-radius:4px; background:var(--border); margin-bottom:8px;" class="skeleton"></div>
+          <div style="height:10px; width:60%; border-radius:4px; background:var(--border);" class="skeleton"></div>
+        </div>
       </div>
 
-      <div class="metric-box">
-        <div class="metric-value" id="metricAvgWait" style="color:#06b6d4;">0 m</div>
-        <div class="metric-label">Avg Wait Time</div>
+      <!-- Live Queue Activity Table -->
+      <div class="section-heading" style="margin-top:4px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Live Queue Activity
       </div>
 
-    </section>
+      <div class="live-table-card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            All Active Tokens
+          </div>
+          <div class="live-pill">
+            <span class="live-dot"></span>
+            Auto-Refresh
+          </div>
+        </div>
 
-    <!-- DEPARTMENT LIVE STATUS -->
-    <section class="glass-card" style="margin-top:20px;">
-
-      <h2>🏢 Department Live Status</h2>
-      <p style="color:gray;">Real-time queue tracking across all departments</p>
-
-      <div class="grid-2" id="departmentGrid">
-        <!-- JS injects cards here -->
+        <div class="data-table-wrap" style="border:none; border-radius:0; border-top:1px solid var(--border);">
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Patient</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Est. Wait</th>
+                <th>Counter</th>
+              </tr>
+            </thead>
+            <tbody id="liveTableBody">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:40px 20px; color:var(--text-muted);">Loading live data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-    </section>
+    </div><!-- /dash-body -->
+  </main><!-- /main-content -->
 
-  </main>
+</div><!-- /app-shell -->
 
-  <!-- SCRIPTS -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="js/dashboard.js"></script>
+<!-- ======================== SCRIPTS ======================== -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/dashboard.js"></script>
+
+<!-- Dashboard enhancements -->
+<script>
+  // Live clock
+  function updateClock() {
+    const el = document.getElementById('dashTime');
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Patch dashboard.js: add completed metric + live table
+  // We hook into the existing loadDashboard cycle via MutationObserver on metricTotal
+  const _origUpdateMetrics = window.updateMetrics;
+  window.updateMetrics = function(tokens) {
+    if (_origUpdateMetrics) _origUpdateMetrics(tokens);
+
+    // Add completed count
+    const completed = tokens.filter(t => t.status === 'COMPLETED').length;
+    const compEl = document.getElementById('metricCompleted');
+    if (compEl) compEl.innerText = completed;
+
+    // Recount serving separately for the teal KPI
+    const serving = tokens.filter(t => t.status === 'SERVING' || t.status === 'CALLED' || t.status === 'IN_PROGRESS').length;
+    const servEl = document.getElementById('metricServed');
+    if (servEl) servEl.innerText = serving;
+
+    // Live activity table
+    renderLiveTable(tokens);
+  };
+
+  function renderLiveTable(tokens) {
+    const tbody = document.getElementById('liveTableBody');
+    if (!tbody) return;
+
+    const active = tokens.filter(t => t.status !== 'COMPLETED' && t.status !== 'CANCELLED');
+
+    if (active.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:36px 20px; color:var(--text-muted); font-size:14px;">No active tokens in the system</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = active.map((t, i) => {
+      const statusClass = 'status-' + (t.status || 'WAITING');
+      const statusLabel = (t.status || 'WAITING').replace('_', ' ');
+      const counter = t.counter_number || t.counter_id || '—';
+      return `
+        <tr style="animation: fadeUp 0.3s ease ${i * 0.04}s both;">
+          <td class="td-token">${t.token_number || '—'}</td>
+          <td class="td-name">${t.user_name || '—'}</td>
+          <td>${t.department_name || '—'}</td>
+          <td><span class="status-tag ${statusClass}">${statusLabel}</span></td>
+          <td>${t.estimated_wait_mins ? t.estimated_wait_mins + ' min' : '—'}</td>
+          <td style="color:var(--text-muted);">${counter}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Patch renderDepartments for premium dept cards
+  const _origRenderDepts = window.renderDepartments;
+  window.renderDepartments = function(tokens) {
+    const container = document.getElementById('departmentGrid');
+    if (!container) return;
+
+    const map = {};
+    tokens.forEach(t => {
+      const id = t.department_id;
+      if (!map[id]) {
+        map[id] = {
+          total: 0, waiting: 0, completed: 0, serving: null,
+          name: t.department_name || `Dept ${id}`,
+          prefix: t.prefix || ''
+        };
+      }
+      const d = map[id];
+      d.total++;
+      if (t.status === 'WAITING')   d.waiting++;
+      if (t.status === 'COMPLETED') d.completed++;
+      if (t.status === 'SERVING' || t.status === 'CALLED' || t.status === 'IN_PROGRESS') d.serving = t;
+    });
+
+    // Determine if anything changed
+    const prev = window._prevDeptState || {};
+    container.innerHTML = '';
+
+    const ids = Object.keys(map);
+    if (ids.length === 0) {
+      container.innerHTML = `
+        <div class="dept-stat-card" style="grid-column:1/-1; text-align:center; padding:36px; color:var(--text-muted);">
+          No department data yet — book a token to see live stats.
+        </div>
+      `;
+      return;
+    }
+
+    ids.forEach((id, i) => {
+      const d = map[id];
+      const changed = !prev[id] ||
+        prev[id].waiting !== d.waiting ||
+        prev[id].completed !== d.completed ||
+        (prev[id].serving?.token_number) !== (d.serving?.token_number);
+
+      const card = document.createElement('div');
+      card.className = 'dept-stat-card' + (changed ? ' card-flash' : '');
+      card.style.animation = `fadeUp 0.35s ease ${i * 0.07}s both`;
+
+      card.innerHTML = `
+        <div style="display:flex; align-items:start; justify-content:space-between; margin-bottom:4px;">
+          <div>
+            <div class="dept-stat-name">${d.name}</div>
+            <div class="dept-stat-prefix">${d.prefix}</div>
+          </div>
+          <span class="status-tag ${d.serving ? 'status-SERVING' : 'status-WAITING'}" style="font-size:10px;">
+            ${d.serving ? 'ACTIVE' : 'QUEUED'}
+          </span>
+        </div>
+
+        <div class="dept-stat-serving">
+          <div class="dept-serving-label">Now Serving</div>
+          <div class="dept-serving-token">${d.serving ? d.serving.token_number : '—'}</div>
+        </div>
+
+        <div class="dept-stat-row">
+          <div class="dept-stat-item">
+            <div class="dept-stat-item-val" style="color:var(--amber-500);">${d.waiting}</div>
+            <div class="dept-stat-item-key">Waiting</div>
+          </div>
+          <div class="dept-stat-item">
+            <div class="dept-stat-item-val" style="color:var(--green-500);">${d.completed}</div>
+            <div class="dept-stat-item-key">Done</div>
+          </div>
+          <div class="dept-stat-item">
+            <div class="dept-stat-item-val">${d.total}</div>
+            <div class="dept-stat-item-key">Total</div>
+          </div>
+        </div>
+      `;
+
+      if (changed) {
+        setTimeout(() => card.classList.remove('card-flash'), 900);
+      }
+
+      container.appendChild(card);
+      prev[id] = { waiting: d.waiting, completed: d.completed, serving: d.serving ? { token_number: d.serving.token_number } : null };
+    });
+
+    window._prevDeptState = prev;
+  };
+
+  // Override the old renderDepartments to prevent duplicate call
+  if (window.loadDashboard) {
+    // Already hooked via updateMetrics above
+  }
+</script>
 
 </body>
 </html>

@@ -1,14 +1,18 @@
+const QRCode = require('qrcode');
+const {
+  sendBookingEmail,
+  sendTurnEmail
+} = require('../services/emailService');
 const { query } = require('../config/db');
 const { calculateEstimatedWaitTime } = require('../services/waitTimeService');
 const { getIo } = require('../socket/queueSocket');
 
-
 // ================= BOOK TOKEN =================
 async function bookToken(req, res) {
   try {
-    const { userName, userPhone, departmentId } = req.body;
+    const { userName, userPhone, userEmail, departmentId } = req.body;
 
-    if (!userName || !userPhone || !departmentId) {
+    if (!userName || !userPhone || !userEmail || !departmentId) {
       return res.status(400).json({
         success: false,
         message: "Missing required fields"
@@ -35,14 +39,13 @@ async function bookToken(req, res) {
     );
 
     const count = countRows?.[0]?.count || 0;
-
     const tokenNumber = `${dept.prefix}-${101 + count}`;
 
     const insertResult = await query(
-      `INSERT INTO tokens 
-      (token_number, user_name, user_phone, department_id, status)
-      VALUES (?, ?, ?, ?, 'WAITING')`,
-      [tokenNumber, userName, userPhone, departmentId]
+      `INSERT INTO tokens
+  (token_number, user_name, user_phone, user_email, department_id, status)
+  VALUES (?, ?, ?, ?, ?, 'WAITING')`,
+      [tokenNumber, userName, userPhone, userEmail, departmentId]
     );
 
     const tokenId = insertResult.insertId;
@@ -54,22 +57,27 @@ async function bookToken(req, res) {
       [waitInfo.estimatedWaitMins, tokenId]
     );
 
+    // Generate QR Code
+const qrData = `SMART-QUEUE:${tokenId}`;
+const qrCodeDataUrl = await QRCode.toDataURL(qrData);
+
     const newToken = {
       id: tokenId,
       token_number: tokenNumber,
       user_name: userName,
       user_phone: userPhone,
+      user_email: userEmail,
       department_id: Number(departmentId),
       department_name: dept.name,
       status: 'WAITING',
       position_in_line: waitInfo.positionInLine,
       waiting_ahead: waitInfo.waitingAhead,
       estimated_wait_mins: waitInfo.estimatedWaitMins,
+      qr_code: qrCodeDataUrl,
       booked_at: new Date().toISOString()
     };
 
     const io = getIo();
-
     if (io) {
       io.emit('token:booked', newToken);
       io.emit('queue:update', { departmentId: Number(departmentId) });
@@ -80,9 +88,21 @@ async function bookToken(req, res) {
       });
     }
 
+    // SEND BOOKING CONFIRMATION EMAIL
+    let emailSent = false;
+
+    try {
+      await sendBookingEmail(userEmail, newToken);
+      emailSent = true;
+      console.log("Booking email sent successfully");
+    } catch (emailError) {
+      console.error("EMAIL ERROR:", emailError.message);
+    }
+
     return res.status(201).json({
       success: true,
       message: "Token booked successfully",
+      emailSent,
       data: newToken
     });
 
@@ -94,7 +114,6 @@ async function bookToken(req, res) {
     });
   }
 }
-
 
 // ================= TOKEN STATUS =================
 async function getTokenStatus(req, res) {
@@ -162,8 +181,7 @@ async function getTokenStatus(req, res) {
   }
 }
 
-
-// ================= QUEUE OVERVIEW (FULL FIX) =================
+// ================= QUEUE OVERVIEW =================
 async function getQueueOverview(req, res) {
   try {
     const rows = await query(`
@@ -173,9 +191,11 @@ async function getQueueOverview(req, res) {
         t.user_name,
         t.status,
         t.department_id,
-        t.estimated_wait_mins
+        t.estimated_wait_mins,
+        d.name AS department_name,
+        d.prefix
       FROM tokens t
-      WHERE t.status = 'WAITING'
+      JOIN departments d ON t.department_id = d.id
       ORDER BY t.id ASC
     `);
 
@@ -193,16 +213,17 @@ async function getQueueOverview(req, res) {
   }
 }
 
-
 // ================= CALL NEXT TOKEN =================
 async function callNextToken(req, res) {
   try {
+    console.log("CALL NEXT BODY:", req.body);
+
     const { counter_id, departmentId } = req.body;
 
-    if (!departmentId) {
+    if (!counter_id || !departmentId || isNaN(departmentId)) {
       return res.status(400).json({
         success: false,
-        message: "departmentId required"
+        message: "Invalid counter or department"
       });
     }
 
@@ -238,9 +259,17 @@ async function callNextToken(req, res) {
     `, [token.id]);
 
     const currentToken = full[0];
+    // Send Your Turn Email
+    if (currentToken.user_email) {
+      try {
+        await sendTurnEmail(currentToken.user_email, currentToken);
+        console.log("Your Turn email sent successfully");
+      } catch (emailError) {
+        console.error("TURN EMAIL ERROR:", emailError.message);
+      }
+    }
 
     const io = getIo();
-
     if (io) {
       io.emit('queue:update', { departmentId });
 
@@ -265,8 +294,6 @@ async function callNextToken(req, res) {
   }
 }
 
-
-// ================= EXPORTS =================
 module.exports = {
   bookToken,
   getTokenStatus,

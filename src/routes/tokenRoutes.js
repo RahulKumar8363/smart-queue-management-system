@@ -10,6 +10,7 @@ const {
 
 const { query } = require('../config/db');
 const { getIo } = require('../socket/queueSocket');
+const { sendCompletionEmail } = require('../services/emailService');
 
 // ================= BOOK =================
 router.post('/book', bookToken);
@@ -43,6 +44,15 @@ router.patch('/status/:id', async (req, res) => {
     );
 
     const token = updated[0];
+    // Send Completion Email
+if (status === "COMPLETED" && token.user_email) {
+  try {
+    await sendCompletionEmail(token.user_email, token);
+    console.log("Completion email sent successfully");
+  } catch (emailError) {
+    console.error("COMPLETION EMAIL ERROR:", emailError.message);
+  }
+}
 
     // 🔥 REALTIME UPDATE FIX
     const io = getIo();

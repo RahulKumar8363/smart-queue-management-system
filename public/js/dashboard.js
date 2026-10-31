@@ -48,7 +48,11 @@ function updateMetrics(tokens) {
   document.getElementById("metricTotal").innerText = total;
   document.getElementById("metricWaiting").innerText = waiting;
   document.getElementById("metricServed").innerText = completed + serving;
-  document.getElementById("metricAvgWait").innerText = avg + " m";
+  const avgWaitEl = document.getElementById("metricAvgWait");
+
+if (avgWaitEl) {
+  avgWaitEl.innerText = avg + " m";
+}
 }
 
 // ================= DEPARTMENT CARDS (STABLE + ANIMATED) =================
