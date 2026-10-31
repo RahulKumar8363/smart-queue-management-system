@@ -1,3 +1,4 @@
+
 const express = require('express');
 const router = express.Router();
 
@@ -5,7 +6,9 @@ const {
   bookToken,
   getTokenStatus,
   getQueueOverview,
-  callNextToken
+  callNextToken,
+  verifyQRToken,
+  checkInToken
 } = require('../controllers/tokenController');
 
 const { query } = require('../config/db');
@@ -24,7 +27,13 @@ router.get('/overview', getQueueOverview);
 // ================= STATUS GET =================
 router.get('/status/:tokenIdentifier', getTokenStatus);
 
-// ================= STATUS UPDATE (FIXED REALTIME) =================
+// ================= QR VERIFICATION =================
+router.post('/verify-qr', verifyQRToken);
+
+// ================= PATIENT CHECK-IN =================
+router.post('/check-in', checkInToken);
+
+// ================= STATUS UPDATE =================
 router.patch('/status/:id', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -43,21 +52,33 @@ router.patch('/status/:id', async (req, res) => {
       [id]
     );
 
-    const token = updated[0];
-    // Send Completion Email
-if (status === "COMPLETED" && token.user_email) {
-  try {
-    await sendCompletionEmail(token.user_email, token);
-    console.log("Completion email sent successfully");
-  } catch (emailError) {
-    console.error("COMPLETION EMAIL ERROR:", emailError.message);
-  }
-}
+    if (!updated.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Token not found"
+      });
+    }
 
-    // 🔥 REALTIME UPDATE FIX
+    const token = updated[0];
+
+    // Send Completion Email
+    if (status === "COMPLETED" && token.user_email) {
+      try {
+        await sendCompletionEmail(token.user_email, token);
+        console.log("Completion email sent successfully");
+      } catch (emailError) {
+        console.error("COMPLETION EMAIL ERROR:", emailError.message);
+      }
+    }
+
+    // REALTIME UPDATE
     const io = getIo();
+
     if (io) {
-      io.emit("queue:update");
+      io.emit("queue:update", {
+        departmentId: token.department_id
+      });
+
       io.to(`dept-${token.department_id}`).emit("dept:update", {
         type: "STATUS_UPDATE",
         data: token
@@ -71,6 +92,7 @@ if (status === "COMPLETED" && token.user_email) {
 
   } catch (err) {
     console.error("STATUS UPDATE ERROR:", err);
+
     return res.status(500).json({
       success: false,
       message: "Status update failed"

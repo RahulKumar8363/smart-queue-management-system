@@ -181,6 +181,148 @@ async function getTokenStatus(req, res) {
   }
 }
 
+
+// ================= VERIFY QR TOKEN =================
+async function verifyQRToken(req, res) {
+  try {
+    const { qrData } = req.body;
+
+    // Validate QR data format
+    if (
+      typeof qrData !== "string" ||
+      !/^SMART-QUEUE:[1-9]\d*$/.test(qrData)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid QR code"
+      });
+    }
+
+    // Extract token ID
+    const tokenId = Number(qrData.split(":")[1]);
+
+    if (!Number.isSafeInteger(tokenId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid token ID"
+      });
+    }
+
+    // Find token in database
+    const rows = await query(
+      `SELECT
+        t.id,
+        t.token_number,
+        t.user_name,
+        t.status,
+        t.department_id,
+        d.name AS department_name
+      FROM tokens t
+      JOIN departments d ON t.department_id = d.id
+      WHERE t.id = ?`,
+      [tokenId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Token not found"
+      });
+    }
+
+    const token = rows[0];
+
+    return res.status(200).json({
+      success: true,
+      message: "QR verified successfully",
+      data: token
+    });
+
+  } catch (err) {
+    console.error("QR VERIFICATION ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error during QR verification"
+    });
+  }
+}
+
+// ================= CHECK-IN TOKEN =================
+async function checkInToken(req, res) {
+  try {
+    const { tokenId } = req.body;
+
+    if (!Number.isSafeInteger(Number(tokenId)) || Number(tokenId) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid token ID"
+      });
+    }
+
+    const rows = await query(
+      "SELECT id, token_number, status, department_id FROM tokens WHERE id = ?",
+      [Number(tokenId)]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Token not found"
+      });
+    }
+
+    if (rows[0].status !== "WAITING") {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot check in. Current status: ${rows[0].status}`
+      });
+    }
+
+    await query(
+      "UPDATE tokens SET status = 'CHECKED_IN' WHERE id = ? AND status = 'WAITING'",
+      [Number(tokenId)]
+    );
+
+    const updatedRows = await query(
+      `SELECT t.id, t.token_number, t.user_name, t.status,
+              t.department_id, d.name AS department_name
+       FROM tokens t
+       JOIN departments d ON t.department_id = d.id
+       WHERE t.id = ?`,
+      [Number(tokenId)]
+    );
+
+    const updatedToken = updatedRows[0];
+    const io = getIo();
+
+    if (io) {
+      io.emit("queue:update", {
+        departmentId: updatedToken.department_id
+      });
+
+      io.to(`dept-${updatedToken.department_id}`).emit("dept:update", {
+        type: "CHECKED_IN",
+        data: updatedToken
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Patient checked in successfully",
+      data: updatedToken
+    });
+
+  } catch (err) {
+    console.error("CHECK-IN ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error during check-in"
+    });
+  }
+}
+
+
 // ================= QUEUE OVERVIEW =================
 async function getQueueOverview(req, res) {
   try {
@@ -229,7 +371,8 @@ async function callNextToken(req, res) {
 
     const tokens = await query(`
       SELECT * FROM tokens
-      WHERE department_id=? AND status='WAITING'
+      WHERE department_id=?
+      AND status IN ('WAITING', 'CHECKED_IN')
       ORDER BY id ASC
       LIMIT 1
     `, [departmentId]);
@@ -298,5 +441,7 @@ module.exports = {
   bookToken,
   getTokenStatus,
   getQueueOverview,
-  callNextToken
+  callNextToken,
+  verifyQRToken,
+  checkInToken
 };
