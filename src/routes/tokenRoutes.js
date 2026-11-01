@@ -14,13 +14,14 @@ const {
 const { query } = require('../config/db');
 const { getIo } = require('../socket/queueSocket');
 const { sendCompletionEmail } = require('../services/emailService');
-const verifyAdminToken = require('../middleware/authMiddleware');
+
+const verifyCounterStaffToken = require('../middleware/verifyCounterStaffToken');
 
 // ================= BOOK TOKEN (PUBLIC) =================
 router.post('/book', bookToken);
 
 // ================= CALL NEXT (PROTECTED) =================
-router.post('/call-next', verifyAdminToken, callNextToken);
+router.post('/call-next', verifyCounterStaffToken, callNextToken);
 
 // ================= QUEUE OVERVIEW (PUBLIC) =================
 router.get('/overview', getQueueOverview);
@@ -29,13 +30,13 @@ router.get('/overview', getQueueOverview);
 router.get('/status/:tokenIdentifier', getTokenStatus);
 
 // ================= QR VERIFICATION (PROTECTED) =================
-router.post('/verify-qr', verifyAdminToken, verifyQRToken);
+router.post('/verify-qr', verifyCounterStaffToken, verifyQRToken);
 
 // ================= PATIENT CHECK-IN (PROTECTED) =================
-router.post('/check-in', verifyAdminToken, checkInToken);
+router.post('/check-in', verifyCounterStaffToken, checkInToken);
 
 // ================= TOKEN STATUS UPDATE (PROTECTED) =================
-router.patch('/status/:id', verifyAdminToken, async (req, res) => {
+router.patch('/status/:id', verifyCounterStaffToken, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 

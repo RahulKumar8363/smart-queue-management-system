@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Sign Up</title>
+</head>
+<body>
+  <h2>Create Staff Account</h2>
+
+  <form id="signupForm">
+    <input id="name" type="text" placeholder="Full Name" required>
+    <input id="email" type="email" placeholder="Email" required>
+    <input id="password" type="password"
+      placeholder="Password (minimum 8 characters)" minlength="8" required>
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <p id="message"></p>
+  <a href="/admin-login.html">Back to Login</a>
+
+  <script src="/js/admin-signup.js"></script>
+</body>
+</html>

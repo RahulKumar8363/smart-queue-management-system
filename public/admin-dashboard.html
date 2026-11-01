@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,10 +30,6 @@
             gap: 15px;
         }
 
-        header h2 {
-            font-size: 22px;
-        }
-
         #logoutBtn {
             background: #ef4444;
             color: white;
@@ -61,7 +58,7 @@
             gap: 20px;
         }
 
-        .card {
+        .card, .quick-links, .staff-section {
             background: white;
             padding: 25px;
             border-radius: 12px;
@@ -79,14 +76,11 @@
             font-size: 32px;
         }
 
-        .quick-links {
+        .quick-links, .staff-section {
             margin-top: 30px;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
         }
 
-        .quick-links h2 {
+        .quick-links h2, .staff-section h2 {
             margin-bottom: 20px;
         }
 
@@ -104,6 +98,33 @@
             border-radius: 7px;
         }
 
+        .staff-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .staff-form input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+        }
+
+        .staff-form button {
+            background: #0f766e;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            padding: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #staffMessage {
+            margin-top: 15px;
+        }
+
         @media (max-width: 600px) {
             main {
                 padding: 18px;
@@ -114,57 +135,93 @@
 
 <body>
 
-    <header>
-        <h2>Smart Queue Admin</h2>
-        <button id="logoutBtn">Logout</button>
-    </header>
+<header>
+    <h2>Smart Queue Admin</h2>
+    <button id="logoutBtn">Logout</button>
+</header>
 
-    <main>
+<main>
 
-        <section class="welcome">
-            <h1>Welcome, <span id="adminName">Admin</span></h1>
-            <p>Manage your Smart Queue Management System.</p>
-        </section>
+    <section class="welcome">
+        <h1>Welcome, <span id="adminName">Admin</span></h1>
+        <p>Manage your Smart Queue Management System.</p>
+    </section>
 
-        <section class="cards">
+    <section class="cards">
 
-            <div class="card">
-                <h3>Total Tokens</h3>
-                <h1 id="totalTokens">0</h1>
-            </div>
+        <div class="card">
+            <h3>Total Tokens</h3>
+            <h1 id="totalTokens">0</h1>
+        </div>
 
-            <div class="card">
-                <h3>Waiting Tokens</h3>
-                <h1 id="waitingTokens">0</h1>
-            </div>
+        <div class="card">
+            <h3>Waiting Tokens</h3>
+            <h1 id="waitingTokens">0</h1>
+        </div>
 
-            <div class="card">
-                <h3>Serving Tokens</h3>
-                <h1 id="servingTokens">0</h1>
-            </div>
+        <div class="card">
+            <h3>Serving Tokens</h3>
+            <h1 id="servingTokens">0</h1>
+        </div>
 
-            <div class="card">
-                <h3>Completed Tokens</h3>
-                <h1 id="completedTokens">0</h1>
-            </div>
+        <div class="card">
+            <h3>Completed Tokens</h3>
+            <h1 id="completedTokens">0</h1>
+        </div>
 
-        </section>
+    </section>
 
-        <section class="quick-links">
+    <section class="quick-links">
+        <h2>Quick Access</h2>
 
-            <h2>Quick Access</h2>
+        <div class="links">
+            <a href="/admin.html">Counter Staff Panel</a>
+            <a href="/dashboard.html">Live Queue Dashboard</a>
+            <a href="/">User Booking Portal</a>
+        </div>
+    </section>
 
-            <div class="links">
-                <a href="/admin.html">Counter Staff Panel</a>
-                <a href="/dashboard.html">Live Queue Dashboard</a>
-                <a href="/">User Booking Portal</a>
-            </div>
+    <!-- SUPER ADMIN ONLY -->
+    <section class="staff-section" id="staffSection" hidden>
 
-        </section>
+        <h2>Create Staff Account</h2>
 
-    </main>
+        <form id="staffForm" class="staff-form">
 
-    <script src="js/admin-dashboard.js"></script>
+            <input
+                type="text"
+                id="staffName"
+                placeholder="Staff Name"
+                maxlength="100"
+                required
+            >
+
+            <input
+                type="email"
+                id="staffEmail"
+                placeholder="Staff Email"
+                required
+            >
+
+            <input
+                type="password"
+                id="staffPassword"
+                placeholder="Password (minimum 8 characters)"
+                minlength="8"
+                required
+            >
+
+            <button type="submit">Create Staff</button>
+
+        </form>
+
+        <p id="staffMessage" aria-live="polite"></p>
+
+    </section>
+
+</main>
+
+<script src="js/admin-dashboard.js"></script>
 
 </body>
 </html>
