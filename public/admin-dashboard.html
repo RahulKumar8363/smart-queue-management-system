@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Smart Queue</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        header h2 {
+            font-size: 22px;
+        }
+
+        #logoutBtn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        main {
+            padding: 30px;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+        }
+
+        .welcome p {
+            color: #64748b;
+            margin-top: 8px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .card h3 {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card h1 {
+            color: #2563eb;
+            font-size: 32px;
+        }
+
+        .quick-links {
+            margin-top: 30px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .quick-links h2 {
+            margin-bottom: 20px;
+        }
+
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .links a {
+            text-decoration: none;
+            background: #2563eb;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 7px;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h2>Smart Queue Admin</h2>
+        <button id="logoutBtn">Logout</button>
+    </header>
+
+    <main>
+
+        <section class="welcome">
+            <h1>Welcome, <span id="adminName">Admin</span></h1>
+            <p>Manage your Smart Queue Management System.</p>
+        </section>
+
+        <section class="cards">
+
+            <div class="card">
+                <h3>Total Tokens</h3>
+                <h1 id="totalTokens">0</h1>
+            </div>
+
+            <div class="card">
+                <h3>Waiting Tokens</h3>
+                <h1 id="waitingTokens">0</h1>
+            </div>
+
+            <div class="card">
+                <h3>Serving Tokens</h3>
+                <h1 id="servingTokens">0</h1>
+            </div>
+
+            <div class="card">
+                <h3>Completed Tokens</h3>
+                <h1 id="completedTokens">0</h1>
+            </div>
+
+        </section>
+
+        <section class="quick-links">
+
+            <h2>Quick Access</h2>
+
+            <div class="links">
+                <a href="/admin.html">Counter Staff Panel</a>
+                <a href="/dashboard.html">Live Queue Dashboard</a>
+                <a href="/">User Booking Portal</a>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="js/admin-dashboard.js"></script>
+
+</body>
+</html>

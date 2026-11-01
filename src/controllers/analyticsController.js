@@ -11,7 +11,9 @@ async function getAnalytics(req, res) {
     const waitingRows = await query('SELECT COUNT(*) as count FROM tokens WHERE status = "WAITING"');
     const waitingCount = waitingRows[0]?.count || waitingRows[0]?.['COUNT(*)'] || 0;
 
-    const calledRows = await query('SELECT COUNT(*) as count FROM tokens WHERE status IN ("CALLED", "IN_PROGRESS")');
+   const calledRows = await query(
+    'SELECT COUNT(*) as count FROM tokens WHERE status = "SERVING"'
+);
     const servingCount = calledRows[0]?.count || calledRows[0]?.['COUNT(*)'] || 0;
 
     const cancelledRows = await query('SELECT COUNT(*) as count FROM tokens WHERE status IN ("CANCELLED", "NO_SHOW")');

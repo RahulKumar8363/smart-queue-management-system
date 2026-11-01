@@ -1,3 +1,4 @@
+const authRoutes = require("./routes/authRoutes");
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -32,6 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "../public")));
 
 // ================= ROUTES =================
+app.use("/api/auth", authRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/tokens", tokenRoutes);
 app.use("/api/analytics", analyticsRoutes);
